@@ -65,6 +65,15 @@ object FS2RedisStream extends LazyLogging {
       row <- q.dequeue.rethrow // [3]
     } yield row
 
+  /*
+
+  rows2 explanation
+
+  create an unbounded queue of the right type
+    async.unboundedQueue[F, Either[Throwable, PubSubMessage]]
+
+   */
+
   def rows2[F[_]](h : RedisSubscriber) (implicit F: Effect[F], ec: ExecutionContext): Stream[F,PubSubMessage] =
     Stream.eval(async.unboundedQueue[F, Either[Throwable, PubSubMessage]]).flatMap(
       q =>
