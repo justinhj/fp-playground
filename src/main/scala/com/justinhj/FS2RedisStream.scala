@@ -1,4 +1,4 @@
-package com.heyesjones.fs2redis
+package com.justinhj
 
 /*
 
@@ -6,18 +6,22 @@ FS2 stream example based on the CSV rows one in the fs2 guide
 It waits for 5 messages to be published on the "test1" channel
 and then prints them out
 
+TODO instructions for setting up Redis Docker, and how to do the test publish at the command line
+TODO possibly Redis Mock if there is one available
+
  */
 
-import cats.Monad
 import cats.effect.{Effect, IO}
 import com.redis._
 import com.typesafe.scalalogging.LazyLogging
-import fs2.{Pipe, Stream, async}
-
+import fs2.{Stream, async}
 import scala.concurrent.ExecutionContext
+import scala.language.{higherKinds, postfixOps}
 import scala.util.{Failure, Success, Try}
 
 object FS2RedisStream extends LazyLogging {
+
+  // Given a RedisClient and a channel name this class encapsulates a callback
 
   case class RedisSubscriber(redis: RedisClient, channel: String) {
 
@@ -28,19 +32,18 @@ object FS2RedisStream extends LazyLogging {
     redis.subscribe(channel) {
 
       // We simply forward any M (messages) by way of the callback
+      case m if newMessageCallback isDefined =>
+        newMessageCallback.get(Right(m))
 
-      redisMessage => redisMessage match {
-        case m @ M(_, message) if newMessageCallback isDefined =>
-          newMessageCallback.get(Right(m))
-
-        // If anything else happens we do nothing
-        case _ =>
-
-      }
+      // If anything else happens we do nothing
+      case _ =>
 
     }
 
-    def setCallback(cb: Either[Throwable, PubSubMessage] => Unit) = newMessageCallback = Some(cb)
+    // Set the callback to the provided method. If a callback was already set then replace it
+    // No attempt is made at thread safety
+    def setCallback(cb: Either[Throwable, PubSubMessage] => Unit) : Unit =
+      newMessageCallback = Some(cb)
 
   }
 
@@ -68,13 +71,11 @@ object FS2RedisStream extends LazyLogging {
         Stream.eval(
           F.delay(
             h.setCallback(e => async.unsafeRunAsync(q.enqueue1(e))(_ => IO.unit)))).flatMap {
-              case _ =>
+              _ =>
                 q.dequeue.rethrow.map(row => row)
             })
 
   def main(args : Array[String]) : Unit = {
-
-    //def debug[A](prefix: String): Pipe[IO,A,A] = a => a.evalMap
 
     Try(new RedisClient("127.0.0.1", 6379)) match {
 
