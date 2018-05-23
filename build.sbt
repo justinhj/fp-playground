@@ -23,7 +23,7 @@ scalacOptions ++= Seq(
   , "-Xverify"
   , "-feature"
   ,"-Ypartial-unification"
-  ,"-Xfatal-warnings"
+//  ,"-Xfatal-warnings"
   , "-language:_"
   //,"-optimise"
 )
@@ -68,7 +68,10 @@ libraryDependencies ++= Seq(
   // type classes
   "com.github.mpilquist" %% "simulacrum" % "0.12.0",
   // li haoyi ammonite repl embed
-  "com.lihaoyi" % "ammonite" % "1.1.2" % "test" cross CrossVersion.full
+  "com.lihaoyi" % "ammonite" % "1.1.2" % "test" cross CrossVersion.full,
+
+  // redis
+  "net.debasishg" %% "redisclient" % "3.5"
 
 )
 

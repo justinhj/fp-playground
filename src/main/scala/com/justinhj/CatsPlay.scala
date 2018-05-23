@@ -1,3 +1,5 @@
+import scalaz.Apply
+
 object CatsPlay {
 
 
@@ -56,7 +58,9 @@ object CatsPlay {
 //      List("Error 1").invalid[Int],
 //      List("Error 2").invalid[Int])
 
-    var x = 1
+
+//    var x = 1
+
 
 
 
